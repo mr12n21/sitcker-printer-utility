@@ -1,47 +1,65 @@
+import requests
+import time
+import re
 import os
+from pathlib import Path
+from websocket import create_connection
 import json
-import logging
-import filecmp
-import shutil
-import tempfile
 
-def setup_logging():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.FileHandler("app.log"),
-            logging.StreamHandler()
-        ]
-    )
+REGEX = r"https://.*\.pdf$"
+OUTPUT_DIR = r"\\server\sdilena\slozka\doklady"
+CHROME_REMOTE_URL = "http://localhost:9222/json"
 
-def load_config():
-    config_path = 'config.json'
-    if not os.path.exists(config_path):
-        logging.error(f"Configuration file {config_path} not found.")
-        raise FileNotFoundError(f"Configuration file {config_path} not found.")
-    
-    #konfigurace by mela udeatl importovani nazvu a nasledne importu sitove cesty / cesty pro ukladani souboru
-    
-    with open(config_path, 'r') as config_file:
-        config = json.load(config_file)
-    
-    return config
+def download_pdf(url):
+    try:
+        filename = Path(url).name
+        dest_path = Path(OUTPUT_DIR) / filename
+        if dest_path.exists():
+            return
+        r = requests.get(url)
+        if r.status_code == 200 and r.headers.get("Content-Type", "").startswith("application/pdf"):
+            with open(dest_path, "wb") as f:
+                f.write(r.content)
+            print(f"Staženo: {dest_path}")
+        else:
+            print(f"[!] URL nenačtena jako PDF: {url}")
+    except Exception as e:
+        print(f"[!] Chyba při stahování: {e}")
 
-def compare_directories(dir1, dir2):
-    """
-    Compare two directories and return True if they are identical, False otherwise.
-    """
-    logging.debug(f"Comparing directories: {dir1} and {dir2}")
-    
-    comparison = filecmp.dircmp(dir1, dir2)
-    
-    if comparison.diff_files or comparison.funny_files:
-        logging.debug(f"Differences found in files: {comparison.diff_files} and {comparison.funny_files}")
-        return False
-    
-    for sub_dir in comparison.subdirs.values():
-        if not compare_directories(sub_dir.left, sub_dir.right):
-            return False
-    
-    return True
+def main():
+    print("Připojuji se na Chrome DevTools...")
+    while True:
+        try:
+            tabs = requests.get(CHROME_REMOTE_URL).json()
+            for tab in tabs:
+                if tab.get("type") != "page":
+                    continue
+                ws_url = tab.get("webSocketDebuggerUrl")
+                if not ws_url:
+                    continue
+
+                ws = create_connection(ws_url)
+                ws.send(json.dumps({"id": 1, "method": "Runtime.enable"}))
+                ws.send(json.dumps({"id": 2, "method": "Page.enable"}))
+                ws.send(json.dumps({
+                    "id": 3,
+                    "method": "Runtime.evaluate",
+                    "params": {"expression": "window.location.href"}
+                }))
+
+                response = ws.recv()
+                data = json.loads(response)
+
+                url = data.get("result", {}).get("result", {}).get("value")
+                if url and re.match(REGEX, url):
+                    print(f"[MATCH] {url}")
+                    download_pdf(url)
+
+                ws.close()
+            time.sleep(1)
+        except Exception as e:
+            print(f"[!] Chyba: {e}")
+            time.sleep(3)
+
+if __name__ == "__main__":
+    main()

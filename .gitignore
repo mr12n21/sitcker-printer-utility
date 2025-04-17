@@ -1,8 +1,6 @@
-# PyInstaller build folders
 /build/
 /dist/
 /__pycache__/
 /*.spec
 
-# Výslovně povol app.exe (neignoruj)
 !/app.exe

@@ -1,0 +1,6 @@
+{
+    "regex": "https://.*\\.pdf$",
+    "output_dir": "\\\\server\\sdilena\\slozka\\doklady",
+    "chrome_remote_url": "http://localhost:9222/json"
+  }
+  

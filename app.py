@@ -19,7 +19,7 @@ def get_active_urls():
         urls = [tab.get("url") for tab in tabs if tab.get("type") == "page"]
         return urls
     except Exception as e:
-        print(f"[!] Nelze načíst záložky: {e}")
+        print(f"nelze nacist jiz otevrene: {e}")
         return []
 
 def download_pdf(url):

@@ -9,7 +9,7 @@ with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
 REGEX = config.get("regex", r"https://.*\.pdf$")
-OUTPUT_DIR = Path(config.get("output_dir", r"\\server\sdilena\slozka\doklady"))
+OUTPUT_DIR = Path(config.get("output_dir", r"./"))
 CHROME_REMOTE_URL = config.get("chrome_remote_url", "http://localhost:9222/json")
 HISTORY_FILE = Path(config.get("history_file", "db.csv"))
 

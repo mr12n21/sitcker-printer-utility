@@ -9,9 +9,9 @@ with open("config.json", "r", encoding="utf-8") as f:
     config = json.load(f)
 
 REGEX = config.get("regex", r"https://.*\.pdf$")
-OUTPUT_DIR = Path(config.get("output_dir", r"./"))
 CHROME_REMOTE_URL = config.get("chrome_remote_url", "http://localhost:9222/json")
 HISTORY_FILE = Path(config.get("history_file", "db.csv"))
+UPLOAD_URL = config.get("upload_url", "http://127.0.0.1:5000/upload")
 
 seen_urls = set()
 if HISTORY_FILE.exists():
@@ -29,25 +29,26 @@ def get_active_urls():
         print(f"nelze načíst již otevřené: {e}")
         return []
 
-def download_pdf(url):
+def fetch_and_upload_pdf(url):
     try:
-        filename = Path(url).name
-        dest_path = OUTPUT_DIR / filename
-        if dest_path.exists():
-            return
         r = requests.get(url)
-        if r.status_code == 200 and r.headers.get("Content-Type", "").startswith("application/pdf"):
-            with open(dest_path, "wb") as f:
-                f.write(r.content)
-            print(f"[OK] Staženo: {dest_path}")
-            #resni hystorie
-            with open(HISTORY_FILE, "a", newline='', encoding='utf-8') as f:
-                writer = csv.writer(f)
-                writer.writerow([url])
+        content_type = r.headers.get("Content-Type", "")
+        if r.status_code == 200 and content_type.startswith("application/pdf"):
+            filename = Path(url).name
+            files = {'file': (filename, r.content, 'application/pdf')}
+            resp = requests.post(UPLOAD_URL, files=files)
+
+            if resp.status_code == 200:
+                print(f"[OK] Úspěšně odesláno: {url}")
+                with open(HISTORY_FILE, "a", newline='', encoding='utf-8') as f:
+                    writer = csv.writer(f)
+                    writer.writerow([url])
+            else:
+                print(f"[!] Selhalo odesílání PDF: {url} -> HTTP {resp.status_code}")
         else:
-            print(f"[!] Nejedná se o PDF: {url}")
+            print(f"[!] Nejedná se o PDF nebo špatný Content-Type: {url}")
     except Exception as e:
-        print(f"[!] Chyba při stahování: {e}")
+        print(f"[!] Chyba při zpracování PDF: {e}")
 
 def main():
     print("Spuštěno...")
@@ -56,7 +57,7 @@ def main():
         for url in urls:
             if url and re.match(REGEX, url) and url not in seen_urls:
                 print(f"[MATCH] {url}")
-                download_pdf(url)
+                fetch_and_upload_pdf(url)
                 seen_urls.add(url)
         time.sleep(2)
 

@@ -1,5 +1,6 @@
 {
   "regex": "https://.*\\.pdf$",
-  "output_dir": "./",
-  "chrome_remote_url": "http://localhost:9222/json"
+  "chrome_remote_url": "http://localhost:9222/json",
+  "upload_url": "http://127.0.0.1:5000/upload",
+  "history_file": "db.csv"
 }

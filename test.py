@@ -36,6 +36,7 @@ def get_active_urls():
 def download_pdf(url):
     try:
         filename = Path(url).name
+        # Přidej .pdf, i když tam není
         if not filename.endswith(".pdf"):
             filename += ".pdf"
         dest_path = OUTPUT_DIR / filename
@@ -47,9 +48,9 @@ def download_pdf(url):
         if r.status_code == 200:
             with open(dest_path, "wb") as f:
                 f.write(r.content)
-            print(f"[OK] Staženo: {dest_path}")
+            print(f"[OK] Uloženo: {dest_path}")
 
-            # Uložení URL do historie
+            # Zapiš URL do historie
             with open(HISTORY_FILE, "a", newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 writer.writerow([url])
@@ -57,6 +58,7 @@ def download_pdf(url):
             print(f"[!] Chyba při stahování {url} – Status code: {r.status_code}")
     except Exception as e:
         print(f"[!] Chyba při stahování: {e}")
+
 
 # Hlavní smyčka
 def main():

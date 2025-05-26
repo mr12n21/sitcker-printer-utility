@@ -3,9 +3,9 @@ import os
 import requests
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
+#musi byt ip adresa
 WATCHED_FOLDER = os.path.expanduser("~/Downloads")
-UPLOAD_URL = "http://localhost:5000/upload"
+UPLOAD_URL = "http://ip:5000/upload"
 EXPECTED_FILENAME = "Účet pokoje.xlsx"
 
 class XLSHandler(FileSystemEventHandler):

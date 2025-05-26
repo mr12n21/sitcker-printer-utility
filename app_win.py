@@ -4,8 +4,8 @@ import requests
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-WATCHED_FOLDER = r"C:\Users\marek\Downloads"
-UPLOAD_URL = "http://localhost:5000/upload"
+WATCHED_FOLDER = r"C:\Users\petr\Downloads"
+UPLOAD_URL = "http://192.168.0.25:5000/upload"
 EXPECTED_FILENAME = "Účet pokoje.xlsx"
 
 class XLSHandler(FileSystemEventHandler):
@@ -33,7 +33,7 @@ class XLSHandler(FileSystemEventHandler):
                     except Exception as e:
                         print(f"Nepodařilo se smazat soubor: {e}")
             else:
-                print(f"ℹ️ Ignorován soubor: {filename}")
+                print(f"Ignorován soubor: {filename}")
 
 if __name__ == "__main__":
     observer = Observer()

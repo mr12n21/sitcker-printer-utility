@@ -9,31 +9,38 @@ UPLOAD_URL = "http://192.168.0.25:5000/upload"
 EXPECTED_FILENAME = "Účet pokoje.xlsx"
 
 class XLSHandler(FileSystemEventHandler):
+    def process_file(self, path):
+        filename = os.path.basename(path)
+        if filename.lower() == EXPECTED_FILENAME.lower():
+            print(f"Nový cílový soubor: {path}")
+            time.sleep(1)  # počkej, až se dokončí zápis
+
+            try:
+                with open(path, 'rb') as f:
+                    files = {"file": (filename, f)}
+                    response = requests.post(UPLOAD_URL, files=files)
+                    if response.ok:
+                        print("Soubor úspěšně odeslán")
+                    else:
+                        print(f"Chyba při odesílání: {response.status_code} {response.text}")
+            except Exception as e:
+                print(f"Chyba při čtení/odesílání: {e}")
+            finally:
+                try:
+                    os.remove(path)
+                    print(f"Soubor smazán: {path}")
+                except Exception as e:
+                    print(f"Nepodařilo se smazat soubor: {e}")
+        else:
+            print(f"Ignorován soubor: {filename}")
+
     def on_created(self, event):
         if not event.is_directory:
-            filename = os.path.basename(event.src_path)
-            if filename.lower() == EXPECTED_FILENAME.lower():
-                print(f"Nový cílový soubor: {event.src_path}")
-                time.sleep(1)  # krátké zpoždění pro jistotu dokončení zápisu
+            self.process_file(event.src_path)
 
-                try:
-                    with open(event.src_path, 'rb') as f:
-                        files = {"file": (filename, f)}
-                        response = requests.post(UPLOAD_URL, files=files)
-                        if response.ok:
-                            print("Soubor úspěšně odeslán")
-                        else:
-                            print(f"Chyba při odesílání: {response.status_code} {response.text}")
-                except Exception as e:
-                    print(f"Chyba při čtení/odesílání: {e}")
-                finally:
-                    try:
-                        os.remove(event.src_path)
-                        print(f"Soubor smazán: {event.src_path}")
-                    except Exception as e:
-                        print(f"Nepodařilo se smazat soubor: {e}")
-            else:
-                print(f"Ignorován soubor: {filename}")
+    def on_moved(self, event):
+        if not event.is_directory:
+            self.process_file(event.dest_path)
 
 if __name__ == "__main__":
     observer = Observer()

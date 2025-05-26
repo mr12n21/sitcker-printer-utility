@@ -1,6 +1,0 @@
-{
-  "regex": "https://pms\\.previo\\.app/.*/reservations/export.*",
-  "output_dir": "./downloads",
-  "chrome_remote_url": "http://localhost:9222/json",
-  "history_file": "db.csv"
-}

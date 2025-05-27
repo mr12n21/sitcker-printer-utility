@@ -6,19 +6,23 @@ from watchdog.events import FileSystemEventHandler
 
 WATCHED_FOLDER = r"C:\Users\petr\Downloads"
 UPLOAD_URL = "http://192.168.0.25:5000/upload"
-EXPECTED_FILENAME_PREFIX = "Účet pokoje"
-EXPECTED_EXTENSION = ".xlsx"
+EXPECTED_FILENAME = "Účet pokoje.xlsx"
+
+for file in os.listdir(WATCHED_FOLDER):
+    if file.lower().endswith((".xls", ".xlsx")):
+        try:
+            path_to_file = os.path.join(WATCHED_FOLDER, file)
+            os.remove(path_to_file)
+            print(f"Odstraněn starý soubor: {file}")
+        except Exception as e:
+            print(f"Nepodařilo se odstranit soubor {file}: {e}")
 
 class XLSHandler(FileSystemEventHandler):
     def process_file(self, path):
         filename = os.path.basename(path)
-        lower_filename = filename.lower()
-        lower_prefix = EXPECTED_FILENAME_PREFIX.lower()
-        lower_extension = EXPECTED_EXTENSION.lower()
-
-        if lower_filename.startswith(lower_prefix) and lower_filename.endswith(lower_extension):
+        if filename.lower() == EXPECTED_FILENAME.lower():
             print(f"Nový cílový soubor: {path}")
-            time.sleep(1)  # počkej, až se dokončí zápis
+            time.sleep(1)
 
             try:
                 with open(path, 'rb') as f:
